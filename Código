@@ -1,5 +1,11 @@
+from enum import Enum
+
+class TipoMensagem(Enum):
+    SMS = "SMS"
+    LIGAÇÃO = "LIGAÇÃO" 
+
 class Mensagem:
-    def __init__(self, conteudo, tipo, remetente, destinatario, id):
+    def __init__(self, conteudo, tipo: TipoMensagem, remetente, destinatario, id):
         self.id = id
         self.tipo = tipo
         self.conteudo = conteudo
@@ -7,7 +13,7 @@ class Mensagem:
         self.destinatario = destinatario
 
     def __str__(self):
-        return f"Mensagem {self.id} de {self.remetente} para {self.destinatario}: {self.conteudo}"
+        return f"Mensagem {self.id} de {self.remetente} para {self.destinatario}: {self.conteudo} ({self.tipo.value})"
 
 class DispositivoMovel:
     def __init__(self, id):
@@ -15,45 +21,65 @@ class DispositivoMovel:
         self.mensagens_recebidas = []
         self.ligacao_ativa = False
 
-    def enviar_mensagem(self, conteudo, destinatario, tipo, estacao_base):        
+    def enviar_mensagem(self, conteudo, destinatario, tipo: TipoMensagem, estacao_base):
         mensagem = Mensagem(conteudo, tipo, f"Dispositivo {self.id}", destinatario, len(self.mensagens_recebidas) + 1)
         print(f"Dispositivo {self.id} enviou mensagem: {mensagem}")
         estacao_base.receber_mensagem(mensagem)
+        return mensagem
+
 
     def receber_mensagem(self, mensagem):
-        print(f"Dispositivo{self.id} recebeu mensagem {mensagem}")
+        print(f"Dispositivo {self.id} recebeu mensagem: {mensagem}")
         self.mensagens_recebidas.append(mensagem)
 
     def iniciar_ligacao(self, algum_dispositivo):
-        print(f"Dispositivo{self.id} iniciou ligação com Dispositivo{algum_dispositivo.id}")
+        if self.ligacao_ativa:
+            print(f"Dispositivo {self.id} já está em uma ligação.")
+            return
+        if algum_dispositivo.ligacao_ativa:
+            print(f"Dispositivo {algum_dispositivo.id} está ocupado.")
+            return
+        print(f"Dispositivo {self.id} iniciou ligação com Dispositivo {algum_dispositivo.id}")
         algum_dispositivo.receber_ligacao(self)
 
-    def receber_ligacao(self, remetente_dispositivo):
-        resposta = input(f"Dispositivo{self.id} recebeu ligação de Dispositivo{remetente_dispositivo.id}. Deseja atender? (sim ou não)")
-        if resposta == "sim":
-            print(f"Dispositivo{self.id} atendeu ligação de Dispositivo{remetente_dispositivo.id}")
-            self.ligacao_ativa = True
-            self.dispositivo_em_ligacao = remetente_dispositivo
-        else:
-            print(f"Dispositivo{self.id} recusou ligação de Dispositivo")
 
-    def  conversa(self, remetente_dispositivo):
-        print(f"Dispositivo{self.id} está em ligação com Dispositivo{remetente_dispositivo.id}")
-        input("Digite sair para encerrar a ligação")
+    def receber_ligacao(self, remetente_dispositivo):
+        while True:
+            resposta = input(f"Dispositivo {self.id} recebeu ligação de Dispositivo {remetente_dispositivo.id}. Deseja atender? (sim ou não): ").strip().lower()
+            if resposta == "sim":
+                print(f"Dispositivo {self.id} atendeu ligação de Dispositivo {remetente_dispositivo.id}")
+                self.ligacao_ativa = True
+                self.dispositivo_em_ligacao = remetente_dispositivo
+                self.conversa(remetente_dispositivo)
+                break
+            elif resposta == "não":
+                print(f"Dispositivo {self.id} recusou ligação de Dispositivo {remetente_dispositivo.id}")
+                break
+            else:
+                print("Resposta inválida. Por favor, digite 'sim' ou 'não'.")
+
+    def conversa(self, remetente_dispositivo):
+        print(f"Dispositivo {self.id} está em ligação com Dispositivo {remetente_dispositivo.id}")
+        input("Digite 'sair' para encerrar a ligação: ")
         self.encerrar_ligacao(remetente_dispositivo)
 
     def encerrar_ligacao(self, remetente_dispositivo):
-        print(f"Dispositivo{self.id} encerrou a ligação com Dispositivo{remetente_dispositivo.id}")
+        print(f"Dispositivo {self.id} encerrou a ligação com Dispositivo {remetente_dispositivo.id}")
         self.ligacao_ativa = False  
     
 class EstacaoBase:
     def __init__(self, id):
         self.id = id
         self.buffer = []
+        self.historico = []
 
-    def receber_mensagem(self,mensagem):
-        print(f"Estação Base{self.id} recebeu mensagem{mensagem}")
+    def receber_mensagem(self, mensagem, rede_central=None):
+        print(f"Estação Base {self.id} recebeu mensagem: {mensagem}")
         self.buffer.append(mensagem)
+        if rede_central:
+            rede_central.receber_mensagem(mensagem)
+
+
 
     def enviar_mensagem(self, destinatario):
         if self.buffer:
@@ -63,21 +89,39 @@ class EstacaoBase:
         else:
             print(f"Estação Base {self.id} não possui mensagens para enviar")
                 
-
 class RedeCentral:
     def __init__(self):
         self.historico = []
 
     def receber_mensagem(self, mensagem):
-        print(f"Rede Central recebeu mensagem{mensagem}")
+        print(f"Rede Central recebeu mensagem: {mensagem}")
         self.historico.append(mensagem)
         self.encaminhar_mensagem(mensagem)
 
     def encaminhar_mensagem(self, mensagem):
-        if mensagem.tipo == "SMS":
-            print(f"Rede Central encaminhou mensagem{mensagem.conteudo} para o destinatario{mensagem.destinatario}")
+        if mensagem.tipo == TipoMensagem.SMS:
+            print(f"Rede Central encaminhou mensagem: {mensagem.conteudo} para o destinatário: {mensagem.destinatario}")
         else:
-            print(f"Ligação iniciada{mensagem.conteudo} para o destinatario{mensagem.destinatario}")    
+            print(f"Ligação iniciada: {mensagem.conteudo} para o destinatário: {mensagem.destinatario}")    
 
 if __name__ == "__main__":
-    pass
+    estacao_base = EstacaoBase(id=1)
+    dispositivo1 = DispositivoMovel(id=1)
+    dispositivo2 = DispositivoMovel(id=2)
+    rede_central = RedeCentral()
+
+    # Enviando uma mensagem SMS
+    mensagem = dispositivo1.enviar_mensagem("Olá, como você está?", "Dispositivo 2", TipoMensagem.SMS, estacao_base)
+    
+    # Processando a mensagem na Estação Base e na Rede Central
+    estacao_base.receber_mensagem(mensagem, rede_central)
+    estacao_base.enviar_mensagem(dispositivo2)
+
+
+    # Ligação
+    dispositivo1.iniciar_ligacao(dispositivo2)
+
+    # Histórico de mensagens na rede
+    print("Histórico da Rede Central:")
+    for msg in rede_central.historico:
+        print(msg)

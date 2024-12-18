@@ -1,0 +1,39 @@
+
+@startuml
+' Configurações de estilo
+skinparam backgroundColor #1E1E1E
+skinparam participantBackgroundColor #2E2E2E
+skinparam participantFontColor #FFFFFF
+skinparam sequenceArrowColor #4CAF50
+skinparam sequenceLifeLineBorderColor #FFFFFF
+skinparam sequenceLifeLineBackgroundColor #2E2E2E
+skinparam noteBackgroundColor #333333
+skinparam noteBorderColor #4CAF50
+skinparam sequenceMessageAlignment center
+
+' Definição dos atores e participantes
+actor "Dispositivo 1" as D1 #blue
+actor "Dispositivo 2" as D2 #red
+participant "Estação Base" as EB #green
+participant "Rede Central" as RC #yellow
+
+' Sequência de envio de SMS
+D1 -> EB: Enviar SMS ("Olá, como você está?")
+EB -> RC: Encaminhar mensagem SMS
+RC --> EB: Confirmação de recebimento
+EB -> D2: Enviar mensagem para o destinatário
+note left of EB
+A mensagem é armazenada no buffer antes de ser enviada.
+end note
+
+' Sequência de ligação
+D1 -> D2: Iniciar Ligação
+D2 --> D1: Receber Ligação
+D2 --> D1: Atender Ligação
+note over D1, D2
+Conexão de voz ativa.
+end note
+D1 -> D2: Encerrar Ligação
+
+@enduml
+
