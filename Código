@@ -102,21 +102,24 @@ class EstacaoBase:
     #Envia a próxima mensagem do buffer para o destinatário
     def enviar_mensagem(self, destinatario):
         if self.buffer:
-            mensagem = self.buffer.pop(0)
+            mensagem = self.buffer.pop(0)  # Remove a primeira mensagem do buffer
             print(f"Estação Base {self.id} enviou mensagem para Dispositivo {destinatario.id}: {mensagem}")
-            destinatario.receber_mensagem(mensagem)
+            destinatario.receber_mensagem(mensagem)  # Envia a mensagem para o destinatário
         else:
-            print(f"Estação Base {self.id} não possui mensagens para enviar")
-                
+            print(f"Estação Base {self.id} não possui mensagens para enviar") # Mensagem de buffer vazio
+
+# Classe da Rede Central                
 class RedeCentral:
     def __init__(self):
-        self.historico = []
+        self.historico = [] # Histórico de mensagens recebidas
 
+    #Recebe uma mensagem e a armazena no histórico
     def receber_mensagem(self, mensagem):
         print(f"Rede Central recebeu mensagem: {mensagem}")
-        self.historico.append(mensagem)
-        self.encaminhar_mensagem(mensagem)
+        self.historico.append(mensagem) # Adiciona a mensagem ao histórico
+        self.encaminhar_mensagem(mensagem) # Encaminha a mensagem
 
+    #Encaminha a mensagem para o destinatário apropriado
     def encaminhar_mensagem(self, mensagem):
         if mensagem.tipo == TipoMensagem.SMS:
             print(f"Rede Central encaminhou mensagem: {mensagem.conteudo} para o destinatário: {mensagem.destinatario}")
