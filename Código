@@ -1,86 +1,105 @@
 from enum import Enum
-
+#Enumera para os tipos de mensagem
 class TipoMensagem(Enum):
-    SMS = "SMS"
-    LIGAÇÃO = "LIGAÇÃO" 
-
+    SMS = "SMS" #Tipo de mensagem SMS
+    LIGAÇÃO = "LIGAÇÃO" #Tipo de  mensagem LIGAÇÃO
+    
+#Classe da Mensagem
 class Mensagem:
     def __init__(self, conteudo, tipo: TipoMensagem, remetente, destinatario, id):
-        self.id = id
-        self.tipo = tipo
-        self.conteudo = conteudo
-        self.remetente = remetente
-        self.destinatario = destinatario
-
+        self.id = id #ID da mensagem
+        self.tipo = tipo #Tipo da Mensagem(SMS ou LIGAÇÃO)
+        self.conteudo = conteudo #Atributo privado para o conteúdo da mensagem
+        self.remetente = remetente #Remetente da mensagem
+        self.destinatario = destinatario #Destinatário da mensagem
+    #Método para representar a mensagem como string
     def __str__(self):
         return f"Mensagem {self.id} de {self.remetente} para {self.destinatario}: {self.conteudo} ({self.tipo.value})"
 
+#Classe que representa o dispositivo móvel
 class DispositivoMovel:
     def __init__(self, id):
-        self.id = id
-        self.mensagens_recebidas = []
-        self.ligacao_ativa = False
+        self.id = id #ID do dispositivo
+        self.mensagens_recebidas = [] #Lista para armazenar as mensagens recebidas
+        self.ligacao_ativa = False # Atributo privado que indica se o dispositivo está em uma ligação
 
+    @property
+    def ligacao_ativa(self):
+        #Retorna a ligação ativa ou não
+        return self._ligacao_ativa
+
+    @ligacao_ativa.setter
+    def ligacao_ativa(self, estado):
+        #Define o estado da ligação, deve ser um valor booleano
+        if isinstance(estado, bool):
+            self._ligacao_ativa = estado
+        else:
+            raise ValueError("O estado da ligação deve ser um booleano.")
+        
+    #Envia uma mensagem para um destinatário através da estação base
     def enviar_mensagem(self, conteudo, destinatario, tipo: TipoMensagem, estacao_base):
         mensagem = Mensagem(conteudo, tipo, f"Dispositivo {self.id}", destinatario, len(self.mensagens_recebidas) + 1)
-        print(f"Dispositivo {self.id} enviou mensagem: {mensagem}")
-        estacao_base.receber_mensagem(mensagem)
-        return mensagem
+        print(f"Dispositivo {self.id} enviou mensagem: {mensagem}") # Exibe mensagem de envio
+        estacao_base.receber_mensagem(mensagem) # Envia a mensagem para a estação base
+        return mensagem # Retorna a mensagem criada
 
-
+    #Recebe uma mensagem e a adiciona à lista de mensagens recebidas
     def receber_mensagem(self, mensagem):
-        print(f"Dispositivo {self.id} recebeu mensagem: {mensagem}")
-        self.mensagens_recebidas.append(mensagem)
+        print(f"Dispositivo {self.id} recebeu mensagem: {mensagem}") # Exibe mensagem recebida
+        self.mensagens_recebidas.append(mensagem) # Adiciona a mensagem à lista
 
+    #Inicia uma ligação com outro dispositivo, se ambos estiverem disponíveis
     def iniciar_ligacao(self, algum_dispositivo):
-        if self.ligacao_ativa:
+        if self.ligacao_ativa: # Verifica se já está em uma ligação
             print(f"Dispositivo {self.id} já está em uma ligação.")
             return
-        if algum_dispositivo.ligacao_ativa:
+        if algum_dispositivo.ligacao_ativa: # Verifica se o outro dispositivo está ocupado
             print(f"Dispositivo {algum_dispositivo.id} está ocupado.")
             return
-        print(f"Dispositivo {self.id} iniciou ligação com Dispositivo {algum_dispositivo.id}")
-        algum_dispositivo.receber_ligacao(self)
+        print(f"Dispositivo {self.id} iniciou ligação com Dispositivo {algum_dispositivo.id}") # Inicia a ligação
+        algum_dispositivo.receber_ligacao(self) # Notifica o outro dispositivo
 
-
+    #Recebe uma ligação de outro dispositivo e pergunta se deseja atender
     def receber_ligacao(self, remetente_dispositivo):
-        while True:
+        while True: # Loop para esperar a resposta do usuário
             resposta = input(f"Dispositivo {self.id} recebeu ligação de Dispositivo {remetente_dispositivo.id}. Deseja atender? (sim ou não): ").strip().lower()
-            if resposta == "sim":
+            if resposta == "sim": # Se o usuário atender a ligação
                 print(f"Dispositivo {self.id} atendeu ligação de Dispositivo {remetente_dispositivo.id}")
-                self.ligacao_ativa = True
+                self.ligacao_ativa = True  # Marca a ligação como ativa
                 self.dispositivo_em_ligacao = remetente_dispositivo
-                self.conversa(remetente_dispositivo)
+                self.conversa(remetente_dispositivo) # Inicia a conversa
                 break
-            elif resposta == "não":
+            elif resposta == "não": # Se o usuário não atender a ligação
                 print(f"Dispositivo {self.id} recusou ligação de Dispositivo {remetente_dispositivo.id}")
                 break
-            else:
+            else: # Resposta inválida
                 print("Resposta inválida. Por favor, digite 'sim' ou 'não'.")
 
+    #Simula uma conversa entre dois dispositivos
     def conversa(self, remetente_dispositivo):
         print(f"Dispositivo {self.id} está em ligação com Dispositivo {remetente_dispositivo.id}")
-        input("Digite 'sair' para encerrar a ligação: ")
-        self.encerrar_ligacao(remetente_dispositivo)
+        input("Digite 'sair' para encerrar a ligação: ") ## Se o usuário deseja encerrar a ligação
+        self.encerrar_ligacao(remetente_dispositivo) # Encerra a ligação
 
     def encerrar_ligacao(self, remetente_dispositivo):
         print(f"Dispositivo {self.id} encerrou a ligação com Dispositivo {remetente_dispositivo.id}")
-        self.ligacao_ativa = False  
-    
+        self.ligacao_ativa = False # Marca a ligação como inativa
+
+## Classe da Estação Base   
 class EstacaoBase:
     def __init__(self, id):
-        self.id = id
-        self.buffer = []
-        self.historico = []
+        self.id = id #ID da estaçãi base
+        self.buffer = [] #Buffer para armazenar as mensagens
+        self.historico = [] #Histórico de mensagens
 
+    ##Recebe uma mensagem e a armazena no buffer
     def receber_mensagem(self, mensagem, rede_central=None):
         print(f"Estação Base {self.id} recebeu mensagem: {mensagem}")
-        self.buffer.append(mensagem)
+        self.buffer.append(mensagem)  # Adiciona a mensagem ao buffer
         if rede_central:
-            rede_central.receber_mensagem(mensagem)
+            rede_central.receber_mensagem(mensagem) # Encaminha a mensagem para a rede central
 
-
-
+    #Envia a próxima mensagem do buffer para o destinatário
     def enviar_mensagem(self, destinatario):
         if self.buffer:
             mensagem = self.buffer.pop(0)
