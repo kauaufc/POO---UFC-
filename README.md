@@ -1,2 +1,2 @@
 # POO---UFC-
-Apresentação sobre o diagrama de comunicação
+Este repositório contém os slides, um diagrama e um código de exemplo, os quais ilustram o Diagrama de Comunicação, utilizados na apresentação do trabalho da disciplina de Programação Orientada a Objetos (POO).
